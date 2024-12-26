@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Powered Electricity Theft Detection System</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-dark: #1a1a1a;
+            --bg-card: #2a2a2a;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0a0;
+            --accent-blue: #4a90e2;
+            --accent-yellow: #ffc01e;
+            --accent-red: #ff375f;
+            --accent-green: #40a340;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 20px;
+        }
+
+        .sidebar, .main-content {
+            background-color: var(--bg-card);
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        .profile-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .profile-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .profile-info h1 {
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+        }
+
+        .profile-info p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .stat-card {
+            background-color: var(--bg-dark);
+            padding: 15px;
+            border-radius: 6px;
+            text-align: center;
+        }
+
+        .stat-card.normal { color: var(--accent-green); }
+        .stat-card.suspicious { color: var(--accent-yellow); }
+        .stat-card.theft { color: var(--accent-red); }
+
+        .chart-container {
+            background-color: var(--bg-card);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .chart-title {
+            font-size: 1.2rem;
+            color: var(--text-primary);
+        }
+
+        .time-filters {
+            display: flex;
+            gap: 10px;
+        }
+
+        .time-filter {
+            padding: 5px 10px;
+            background: var(--bg-dark);
+            border: none;
+            color: var(--text-secondary);
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .time-filter.active {
+            background: var(--accent-blue);
+            color: var(--text-primary);
+        }
+
+        .detection-list {
+            margin-top: 20px;
+        }
+
+        .detection-item {
+            padding: 15px;
+            background-color: var(--bg-dark);
+            border-radius: 6px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .detection-item.suspicious {
+            border-left: 4px solid var(--accent-yellow);
+        }
+
+        .detection-item.theft {
+            border-left: 4px solid var(--accent-red);
+        }
+
+        .map-container {
+            height: 300px;
+            background-color: var(--bg-dark);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <aside class="sidebar">
+            <div class="profile-header">
+                <img src="https://via.placeholder.com/80?text=Logo" alt="System Avatar" class="profile-avatar">
+                <div class="profile-info">
+                    <h1>AI Detection System</h1>
+                    <p>Version 2.0</p>
+                </div>
+            </div>
+            
+            <div class="stats-grid">
+                <div class="stat-card normal">
+                    <h3>Normal</h3>
+                    <p id="normal-percentage">85%</p>
+                </div>
+                <div class="stat-card suspicious">
+                    <h3>Suspicious</h3>
+                    <p id="suspicious-percentage">12%</p>
+                </div>
+                <div class="stat-card theft">
+                    <h3>Theft</h3>
+                    <p id="theft-percentage">3%</p>
+                </div>
+            </div>
+
+            <div class="detection-list">
+                <h3>Recent Detections</h3>
+                <div id="detection-items"></div>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h2 class="chart-title">Power Consumption Analysis</h2>
+                    <div class="time-filters">
+                        <button class="time-filter active" data-range="1D">1D</button>
+                        <button class="time-filter" data-range="1W">1W</button>
+                        <button class="time-filter" data-range="1M">1M</button>
+                        <button class="time-filter" data-range="1Y">1Y</button>
+                    </div>
+                </div>
+                <canvas id="consumptionChart"></canvas>
+            </div>
+
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h2 class="chart-title">Anomaly Detection</h2>
+                </div>
+                <canvas id="anomalyChart"></canvas>
+            </div>
+
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h2 class="chart-title">Theft Detection Map</h2>
+                </div>
+                <div id="map" class="map-container"></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDavvtBK8qevYbrYZjsY_rCP2D5Ila1l8w"></script>
+    <script src="dashboard.js"></script>
+</body>
+</html>
+
